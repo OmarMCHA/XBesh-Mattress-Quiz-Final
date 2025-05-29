@@ -1,0 +1,147 @@
+:root {
+  --primary: #5271FF;
+  --primary-light: #E2E8FF;
+  --primary-dark: #3A56D4;
+  --secondary: #FF7D54;
+  --text: #333333;
+  --text-light: #666666;
+  --background: #FFFFFF;
+  --background-alt: #F8F9FC;
+  --border: #E5E7EB;
+  --success: #10B981;
+  --error: #EF4444;
+  --warning: #F59E0B;
+  
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 1rem;
+  
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  --font-serif: 'Playfair Display', Georgia, Cambria, "Times New Roman", Times, serif;
+  
+  --transition: 0.2s ease-in-out;
+  
+  /* Added spacing variables for consistency */
+  --spacing-xs: 0.5rem;
+  --spacing-sm: 1rem;
+  --spacing-md: 2rem;
+  --spacing-lg: 3rem;
+  --spacing-xl: 4rem;
+  --spacing-xxl: 6rem;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  color: var(--text);
+  background-color: var(--background);
+  line-height: 1.6; /* Increased from 1.5 */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-size: 16px; /* Base font size */
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  line-height: 1.3; /* Increased from 1.2 */
+  margin-bottom: 1.5rem;
+}
+
+h1 {
+  font-size: 2.75rem; /* Increased from 2.5rem */
+}
+
+h2 {
+  font-size: 2.25rem; /* Increased from 2rem */
+}
+
+h3 {
+  font-size: 1.875rem; /* Increased from 1.75rem */
+}
+
+h4 {
+  font-size: 1.625rem; /* Increased from 1.5rem */
+}
+
+p {
+  margin-bottom: 1.5rem;
+  font-size: 1.05rem; /* Added base paragraph size */
+}
+
+a {
+  color: var(--primary);
+  text-decoration: none;
+  transition: color var(--transition);
+}
+
+a:hover {
+  color: var(--primary-dark);
+}
+
+button {
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: 1.05rem; /* Increased button font size */
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+#root {
+  height: 100%;
+}
+
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2.5rem;
+}
+
+/* Added section spacing */
+section {
+  margin-bottom: var(--spacing-xxl);
+  padding: var(--spacing-md) 0;
+}
+
+@media (max-width: 768px) {
+  h1 {
+    font-size: 2.25rem; /* Increased from 2rem */
+  }
+  
+  h2 {
+    font-size: 1.875rem; /* Increased from 1.75rem */
+  }
+  
+  h3 {
+    font-size: 1.625rem; /* Increased from 1.5rem */
+  }
+  
+  h4 {
+    font-size: 1.375rem; /* Increased from 1.25rem */
+  }
+  
+  .container {
+    padding: 0 1.5rem;
+  }
+  
+  section {
+    margin-bottom: var(--spacing-xl);
+  }
+}
