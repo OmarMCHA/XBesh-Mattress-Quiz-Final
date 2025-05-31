@@ -253,15 +253,43 @@ const ReviewText = styled.p`
   font-size: 0.95rem;
 `
 
+const SuccessMessage = styled.div`
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background-color: #4CAF50;
+  color: white;
+  padding: 1rem;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  z-index: 1100;
+  animation: fadeOut 3s forwards;
+  animation-delay: 2s;
+  
+  @keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; visibility: hidden; }
+  }
+`
+
 function MattressManager() {
   const [mattresses, setMattresses] = useState([])
   const [selectedMattress, setSelectedMattress] = useState(null)
   const [editedMattress, setEditedMattress] = useState(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [showSuccess, setShowSuccess] = useState(false)
   
   useEffect(() => {
-    // In a real app, you would fetch this from your backend
-    setMattresses(mattressData)
+    // Try to load mattresses from localStorage first
+    const savedMattresses = localStorage.getItem('mattressData')
+    if (savedMattresses) {
+      setMattresses(JSON.parse(savedMattresses))
+    } else {
+      // Fall back to the imported data if nothing in localStorage
+      setMattresses(mattressData)
+      // Initialize localStorage with the imported data
+      localStorage.setItem('mattressData', JSON.stringify(mattressData))
+    }
   }, [])
   
   const handleMattressClick = (mattress) => {
@@ -363,16 +391,27 @@ function MattressManager() {
   }
   
   const handleSave = () => {
-    // In a real app, you would send this to your backend
-    setMattresses(prev => 
-      prev.map(mattress => 
-        mattress.id === editedMattress.id ? editedMattress : mattress
-      )
+    // Update the mattresses state with the edited mattress
+    const updatedMattresses = mattresses.map(mattress => 
+      mattress.id === editedMattress.id ? editedMattress : mattress
     )
+    
+    // Update state
+    setMattresses(updatedMattresses)
+    
+    // Save to localStorage for persistence
+    localStorage.setItem('mattressData', JSON.stringify(updatedMattresses))
+    
+    // Close the modal
     handleCloseModal()
     
     // Show success message
-    alert('Mattress updated successfully!')
+    setShowSuccess(true)
+    
+    // Hide success message after 5 seconds
+    setTimeout(() => {
+      setShowSuccess(false)
+    }, 5000)
   }
   
   // Generate star rating
@@ -740,6 +779,12 @@ function MattressManager() {
             <SaveButton onClick={handleSave}>Save Changes</SaveButton>
           </ModalContent>
         </Modal>
+      )}
+      
+      {showSuccess && (
+        <SuccessMessage>
+          Mattress updated successfully!
+        </SuccessMessage>
       )}
     </Container>
   )
