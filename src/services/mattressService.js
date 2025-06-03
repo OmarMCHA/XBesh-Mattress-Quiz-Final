@@ -65,7 +65,33 @@ export const getMattresses = async () => {
     
     if (data && data.length > 0) {
       console.log(`Retrieved ${data.length} mattresses from database`);
-      return data;
+      
+      // Transform data to match the expected format in the UI
+      const transformedData = data.map(item => ({
+        id: item.id,
+        name: item.name,
+        brand: item.brand,
+        type: item.type,
+        firmness: item.firmness,
+        price: item.price,
+        url: item.url,
+        features: Array.isArray(item.features) ? item.features : [],
+        pros: Array.isArray(item.pros) ? item.pros : [],
+        cons: Array.isArray(item.cons) ? item.cons : [],
+        warranty: item.warranty,
+        trialPeriod: item.trial_period,
+        shipping: item.shipping,
+        returns: item.returns,
+        idealFor: Array.isArray(item.ideal_for) ? item.ideal_for : [],
+        description: item.description,
+        expertOpinion: item.expert_opinion,
+        image: item.image,
+        reviewCount: item.review_count,
+        rating: item.rating,
+        reviews: Array.isArray(item.reviews) ? item.reviews : []
+      }));
+      
+      return transformedData;
     } else {
       console.log('No mattresses found in database, using local data');
       // Try to initialize the database with local data
@@ -81,7 +107,33 @@ export const getMattresses = async () => {
       
       if (retryData && retryData.length > 0) {
         console.log(`Retrieved ${retryData.length} mattresses after initialization`);
-        return retryData;
+        
+        // Transform data to match the expected format in the UI
+        const transformedData = retryData.map(item => ({
+          id: item.id,
+          name: item.name,
+          brand: item.brand,
+          type: item.type,
+          firmness: item.firmness,
+          price: item.price,
+          url: item.url,
+          features: Array.isArray(item.features) ? item.features : [],
+          pros: Array.isArray(item.pros) ? item.pros : [],
+          cons: Array.isArray(item.cons) ? item.cons : [],
+          warranty: item.warranty,
+          trialPeriod: item.trial_period,
+          shipping: item.shipping,
+          returns: item.returns,
+          idealFor: Array.isArray(item.ideal_for) ? item.ideal_for : [],
+          description: item.description,
+          expertOpinion: item.expert_opinion,
+          image: item.image,
+          reviewCount: item.review_count,
+          rating: item.rating,
+          reviews: Array.isArray(item.reviews) ? item.reviews : []
+        }));
+        
+        return transformedData;
       } else {
         console.log('Still no mattresses found, using local data as fallback');
         return mattressData;
@@ -111,7 +163,33 @@ export const getMattressById = async (id) => {
     
     if (data) {
       console.log(`Retrieved mattress with ID ${id} from database`);
-      return data;
+      
+      // Transform data to match the expected format in the UI
+      const transformedData = {
+        id: data.id,
+        name: data.name,
+        brand: data.brand,
+        type: data.type,
+        firmness: data.firmness,
+        price: data.price,
+        url: data.url,
+        features: Array.isArray(data.features) ? data.features : [],
+        pros: Array.isArray(data.pros) ? data.pros : [],
+        cons: Array.isArray(data.cons) ? data.cons : [],
+        warranty: data.warranty,
+        trialPeriod: data.trial_period,
+        shipping: data.shipping,
+        returns: data.returns,
+        idealFor: Array.isArray(data.ideal_for) ? data.ideal_for : [],
+        description: data.description,
+        expertOpinion: data.expert_opinion,
+        image: data.image,
+        reviewCount: data.review_count,
+        rating: data.rating,
+        reviews: Array.isArray(data.reviews) ? data.reviews : []
+      };
+      
+      return transformedData;
     } else {
       console.log(`No mattress with ID ${id} found in database`);
       return null;
@@ -133,45 +211,58 @@ export const getMattressById = async (id) => {
 // Update a mattress
 export const updateMattress = async (mattress) => {
   console.log('Updating mattress:', mattress);
+  console.log('Image URL being updated to:', mattress.image);
   
   try {
+    // Log the mattress object to see what we're working with
+    console.log('Full mattress object to update:', JSON.stringify(mattress, null, 2));
+    
     // Ensure the data is properly formatted for Supabase
     const formattedMattress = {
-      ...mattress,
-      // Convert arrays to JSONB if they're not already
+      id: mattress.id,
+      name: mattress.name,
+      brand: mattress.brand,
+      type: mattress.type,
+      firmness: mattress.firmness,
+      price: mattress.price,
+      url: mattress.url,
       features: Array.isArray(mattress.features) ? mattress.features : [],
       pros: Array.isArray(mattress.pros) ? mattress.pros : [],
       cons: Array.isArray(mattress.cons) ? mattress.cons : [],
+      warranty: mattress.warranty,
+      trial_period: mattress.trialPeriod,
+      shipping: mattress.shipping,
+      returns: mattress.returns,
       ideal_for: Array.isArray(mattress.idealFor) ? mattress.idealFor : [],
-      reviews: Array.isArray(mattress.reviews) ? mattress.reviews : []
+      description: mattress.description,
+      expert_opinion: mattress.expertOpinion,
+      image: mattress.image, // Ensure this is included
+      review_count: mattress.reviewCount,
+      rating: mattress.rating,
+      reviews: Array.isArray(mattress.reviews) ? mattress.reviews : [],
+      updated_at: new Date()
     };
+    
+    console.log('Formatted mattress for Supabase update:', JSON.stringify(formattedMattress, null, 2));
+    
+    // First, check if the mattress exists
+    const { data: existingData, error: checkError } = await supabase
+      .from('mattresses')
+      .select('id, image')
+      .eq('id', mattress.id)
+      .single();
+    
+    if (checkError) {
+      console.error('Error checking if mattress exists:', checkError);
+      throw checkError;
+    }
+    
+    console.log('Existing mattress data:', existingData);
     
     // Update the mattress in Supabase
     const { data, error } = await supabase
       .from('mattresses')
-      .update({
-        name: formattedMattress.name,
-        brand: formattedMattress.brand,
-        type: formattedMattress.type,
-        firmness: formattedMattress.firmness,
-        price: formattedMattress.price,
-        url: formattedMattress.url,
-        features: formattedMattress.features,
-        pros: formattedMattress.pros,
-        cons: formattedMattress.cons,
-        warranty: formattedMattress.warranty,
-        trial_period: formattedMattress.trialPeriod,
-        shipping: formattedMattress.shipping,
-        returns: formattedMattress.returns,
-        ideal_for: formattedMattress.idealFor,
-        description: formattedMattress.description,
-        expert_opinion: formattedMattress.expertOpinion,
-        image: formattedMattress.image,
-        review_count: formattedMattress.reviewCount,
-        rating: formattedMattress.rating,
-        reviews: formattedMattress.reviews,
-        updated_at: new Date()
-      })
+      .update(formattedMattress)
       .eq('id', mattress.id)
       .select();
     
@@ -182,6 +273,7 @@ export const updateMattress = async (mattress) => {
     
     if (data && data.length > 0) {
       console.log('Mattress updated successfully in database:', data[0]);
+      console.log('Updated image URL in database:', data[0].image);
       
       // Also update in local storage as backup
       const savedMattresses = JSON.parse(localStorage.getItem('mattressData') || JSON.stringify(mattressData));
@@ -190,7 +282,32 @@ export const updateMattress = async (mattress) => {
       );
       localStorage.setItem('mattressData', JSON.stringify(updatedMattresses));
       
-      return data[0];
+      // Transform data to match the expected format in the UI
+      const transformedData = {
+        id: data[0].id,
+        name: data[0].name,
+        brand: data[0].brand,
+        type: data[0].type,
+        firmness: data[0].firmness,
+        price: data[0].price,
+        url: data[0].url,
+        features: Array.isArray(data[0].features) ? data[0].features : [],
+        pros: Array.isArray(data[0].pros) ? data[0].pros : [],
+        cons: Array.isArray(data[0].cons) ? data[0].cons : [],
+        warranty: data[0].warranty,
+        trialPeriod: data[0].trial_period,
+        shipping: data[0].shipping,
+        returns: data[0].returns,
+        idealFor: Array.isArray(data[0].ideal_for) ? data[0].ideal_for : [],
+        description: data[0].description,
+        expertOpinion: data[0].expert_opinion,
+        image: data[0].image,
+        reviewCount: data[0].review_count,
+        rating: data[0].rating,
+        reviews: Array.isArray(data[0].reviews) ? data[0].reviews : []
+      };
+      
+      return transformedData;
     } else {
       console.error('No data returned after update');
       throw new Error('No data returned after update');
@@ -215,47 +332,42 @@ export const updateMattress = async (mattress) => {
 // Create a new mattress
 export const createMattress = async (mattress) => {
   console.log('Creating new mattress:', mattress);
+  console.log('Image URL for new mattress:', mattress.image);
   
   try {
     // Ensure the data is properly formatted for Supabase
     const formattedMattress = {
-      ...mattress,
-      // Convert arrays to JSONB if they're not already
+      id: mattress.id,
+      name: mattress.name,
+      brand: mattress.brand,
+      type: mattress.type,
+      firmness: mattress.firmness,
+      price: mattress.price,
+      url: mattress.url,
       features: Array.isArray(mattress.features) ? mattress.features : [],
       pros: Array.isArray(mattress.pros) ? mattress.pros : [],
       cons: Array.isArray(mattress.cons) ? mattress.cons : [],
+      warranty: mattress.warranty,
+      trial_period: mattress.trialPeriod,
+      shipping: mattress.shipping,
+      returns: mattress.returns,
       ideal_for: Array.isArray(mattress.idealFor) ? mattress.idealFor : [],
-      reviews: Array.isArray(mattress.reviews) ? mattress.reviews : []
+      description: mattress.description,
+      expert_opinion: mattress.expertOpinion,
+      image: mattress.image, // Ensure this is included
+      review_count: mattress.reviewCount,
+      rating: mattress.rating,
+      reviews: Array.isArray(mattress.reviews) ? mattress.reviews : [],
+      created_at: new Date(),
+      updated_at: new Date()
     };
+    
+    console.log('Formatted mattress for Supabase insert:', JSON.stringify(formattedMattress, null, 2));
     
     // Insert the new mattress into Supabase
     const { data, error } = await supabase
       .from('mattresses')
-      .insert([{
-        id: formattedMattress.id,
-        name: formattedMattress.name,
-        brand: formattedMattress.brand,
-        type: formattedMattress.type,
-        firmness: formattedMattress.firmness,
-        price: formattedMattress.price,
-        url: formattedMattress.url,
-        features: formattedMattress.features,
-        pros: formattedMattress.pros,
-        cons: formattedMattress.cons,
-        warranty: formattedMattress.warranty,
-        trial_period: formattedMattress.trialPeriod,
-        shipping: formattedMattress.shipping,
-        returns: formattedMattress.returns,
-        ideal_for: formattedMattress.idealFor,
-        description: formattedMattress.description,
-        expert_opinion: formattedMattress.expertOpinion,
-        image: formattedMattress.image,
-        review_count: formattedMattress.reviewCount,
-        rating: formattedMattress.rating,
-        reviews: formattedMattress.reviews,
-        created_at: new Date(),
-        updated_at: new Date()
-      }])
+      .insert([formattedMattress])
       .select();
     
     if (error) {
@@ -265,13 +377,39 @@ export const createMattress = async (mattress) => {
     
     if (data && data.length > 0) {
       console.log('Mattress created successfully in database:', data[0]);
+      console.log('Image URL in created mattress:', data[0].image);
       
       // Also update in local storage as backup
       const savedMattresses = JSON.parse(localStorage.getItem('mattressData') || JSON.stringify(mattressData));
       savedMattresses.push(mattress);
       localStorage.setItem('mattressData', JSON.stringify(savedMattresses));
       
-      return data[0];
+      // Transform data to match the expected format in the UI
+      const transformedData = {
+        id: data[0].id,
+        name: data[0].name,
+        brand: data[0].brand,
+        type: data[0].type,
+        firmness: data[0].firmness,
+        price: data[0].price,
+        url: data[0].url,
+        features: Array.isArray(data[0].features) ? data[0].features : [],
+        pros: Array.isArray(data[0].pros) ? data[0].pros : [],
+        cons: Array.isArray(data[0].cons) ? data[0].cons : [],
+        warranty: data[0].warranty,
+        trialPeriod: data[0].trial_period,
+        shipping: data[0].shipping,
+        returns: data[0].returns,
+        idealFor: Array.isArray(data[0].ideal_for) ? data[0].ideal_for : [],
+        description: data[0].description,
+        expertOpinion: data[0].expert_opinion,
+        image: data[0].image,
+        reviewCount: data[0].review_count,
+        rating: data[0].rating,
+        reviews: Array.isArray(data[0].reviews) ? data[0].reviews : []
+      };
+      
+      return transformedData;
     } else {
       console.error('No data returned after create');
       throw new Error('No data returned after create');

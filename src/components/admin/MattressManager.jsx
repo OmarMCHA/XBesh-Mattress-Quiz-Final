@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react'
 import styled from 'styled-components'
 import { v4 as uuidv4 } from 'uuid'
@@ -433,6 +434,17 @@ const Spinner = styled.div`
   }
 `
 
+const ImagePreview = styled.div`
+  margin-top: 0.5rem;
+  width: 100%;
+  height: 150px;
+  background-image: url(${props => props.src || '/images/placeholder.svg'});
+  background-size: cover;
+  background-position: center;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+`
+
 function MattressManager() {
   const [mattresses, setMattresses] = useState([])
   const [selectedMattress, setSelectedMattress] = useState(null)
@@ -473,6 +485,7 @@ function MattressManager() {
       const data = await getMattresses()
       if (data && data.length > 0) {
         console.log(`Loaded ${data.length} mattresses successfully`);
+        console.log('Sample mattress data:', data[0]);
         setMattresses(data)
       } else {
         throw new Error('No mattresses returned from database');
@@ -487,6 +500,7 @@ function MattressManager() {
   }
   
   const handleMattressClick = (mattress) => {
+    console.log('Clicked mattress:', mattress);
     setSelectedMattress(mattress)
     setEditedMattress({...mattress})
     setIsModalOpen(true)
@@ -512,7 +526,7 @@ function MattressManager() {
       idealFor: ["Side sleepers", "Back sleepers"],
       description: "Description of the new mattress.",
       expertOpinion: "Expert opinion about the new mattress.",
-      image: "/images/placeholder.svg",
+      image: "https://images.pexels.com/photos/6186440/pexels-photo-6186440.jpeg",
       reviewCount: 0,
       rating: 5.0,
       reviews: [
@@ -541,6 +555,7 @@ function MattressManager() {
   
   const handleInputChange = (e) => {
     const { name, value } = e.target
+    console.log(`Input changed: ${name} = ${value}`);
     setEditedMattress(prev => ({
       ...prev,
       [name]: value
@@ -628,6 +643,8 @@ function MattressManager() {
   const handleSave = async () => {
     setIsLoading(true)
     try {
+      console.log('Saving mattress with image URL:', editedMattress.image);
+      
       let savedMattress
       
       if (isCreating) {
@@ -637,6 +654,9 @@ function MattressManager() {
       }
       
       if (savedMattress) {
+        console.log('Saved mattress returned from API:', savedMattress);
+        console.log('Saved image URL:', savedMattress.image);
+        
         // Update the local state
         setMattresses(prev => {
           if (isCreating) {
@@ -850,307 +870,4 @@ function MattressManager() {
               <FormGroup>
                 <Label>URL</Label>
                 <Input 
-                  type="text" 
-                  name="url" 
-                  value={editedMattress.url} 
-                  onChange={handleInputChange} 
-                />
-              </FormGroup>
-              
-              <FormGroup>
-                <Label>Image URL</Label>
-                <Input 
-                  type="text" 
-                  name="image" 
-                  value={editedMattress.image} 
-                  onChange={handleInputChange} 
-                />
-              </FormGroup>
-              
-              <FormGroup>
-                <Label>Warranty</Label>
-                <Input 
-                  type="text" 
-                  name="warranty" 
-                  value={editedMattress.warranty} 
-                  onChange={handleInputChange} 
-                />
-              </FormGroup>
-              
-              <FormGroup>
-                <Label>Trial Period</Label>
-                <Input 
-                  type="text" 
-                  name="trialPeriod" 
-                  value={editedMattress.trialPeriod} 
-                  onChange={handleInputChange} 
-                />
-              </FormGroup>
-              
-              <FormGroup>
-                <Label>Shipping</Label>
-                <Input 
-                  type="text" 
-                  name="shipping" 
-                  value={editedMattress.shipping} 
-                  onChange={handleInputChange} 
-                />
-              </FormGroup>
-              
-              <FormGroup>
-                <Label>Returns</Label>
-                <Input 
-                  type="text" 
-                  name="returns" 
-                  value={editedMattress.returns} 
-                  onChange={handleInputChange} 
-                />
-              </FormGroup>
-              
-              <FormGroup>
-                <Label>Rating (1-5)</Label>
-                <Input 
-                  type="number" 
-                  name="rating" 
-                  min="1" 
-                  max="5" 
-                  step="0.1" 
-                  value={editedMattress.rating} 
-                  onChange={handleNumberChange} 
-                />
-              </FormGroup>
-              
-              <FormGroup>
-                <Label>Review Count</Label>
-                <Input 
-                  type="number" 
-                  name="reviewCount" 
-                  value={editedMattress.reviewCount} 
-                  onChange={handleNumberChange} 
-                />
-              </FormGroup>
-            </FormGrid>
-            
-            <FormGroup>
-              <Label>Description</Label>
-              <TextArea 
-                name="description" 
-                value={editedMattress.description} 
-                onChange={handleInputChange} 
-              />
-            </FormGroup>
-            
-            <FormGroup>
-              <Label>Expert Opinion</Label>
-              <TextArea 
-                name="expertOpinion" 
-                value={editedMattress.expertOpinion} 
-                onChange={handleInputChange} 
-              />
-            </FormGroup>
-            
-            <FormGroup>
-              <Label>Features</Label>
-              <ArrayInput>
-                {editedMattress.features.map((feature, index) => (
-                  <ArrayItem key={index}>
-                    <ArrayItemInput 
-                      type="text" 
-                      value={feature} 
-                      onChange={(e) => handleArrayItemChange('features', index, e.target.value)} 
-                    />
-                    <RemoveButton onClick={() => handleRemoveArrayItem('features', index)}>
-                      Remove
-                    </RemoveButton>
-                  </ArrayItem>
-                ))}
-                <AddItemButton onClick={() => handleAddArrayItem('features')}>
-                  Add Feature
-                </AddItemButton>
-              </ArrayInput>
-            </FormGroup>
-            
-            <FormGroup>
-              <Label>Pros</Label>
-              <ArrayInput>
-                {editedMattress.pros.map((pro, index) => (
-                  <ArrayItem key={index}>
-                    <ArrayItemInput 
-                      type="text" 
-                      value={pro} 
-                      onChange={(e) => handleArrayItemChange('pros', index, e.target.value)} 
-                    />
-                    <RemoveButton onClick={() => handleRemoveArrayItem('pros', index)}>
-                      Remove
-                    </RemoveButton>
-                  </ArrayItem>
-                ))}
-                <AddItemButton onClick={() => handleAddArrayItem('pros')}>
-                  Add Pro
-                </AddItemButton>
-              </ArrayInput>
-            </FormGroup>
-            
-            <FormGroup>
-              <Label>Cons</Label>
-              <ArrayInput>
-                {editedMattress.cons.map((con, index) => (
-                  <ArrayItem key={index}>
-                    <ArrayItemInput 
-                      type="text" 
-                      value={con} 
-                      onChange={(e) => handleArrayItemChange('cons', index, e.target.value)} 
-                    />
-                    <RemoveButton onClick={() => handleRemoveArrayItem('cons', index)}>
-                      Remove
-                    </RemoveButton>
-                  </ArrayItem>
-                ))}
-                <AddItemButton onClick={() => handleAddArrayItem('cons')}>
-                  Add Con
-                </AddItemButton>
-              </ArrayInput>
-            </FormGroup>
-            
-            <FormGroup>
-              <Label>Ideal For</Label>
-              <ArrayInput>
-                {editedMattress.idealFor.map((ideal, index) => (
-                  <ArrayItem key={index}>
-                    <ArrayItemInput 
-                      type="text" 
-                      value={ideal} 
-                      onChange={(e) => handleArrayItemChange('idealFor', index, e.target.value)} 
-                    />
-                    <RemoveButton onClick={() => handleRemoveArrayItem('idealFor', index)}>
-                      Remove
-                    </RemoveButton>
-                  </ArrayItem>
-                ))}
-                <AddItemButton onClick={() => handleAddArrayItem('idealFor')}>
-                  Add Ideal For
-                </AddItemButton>
-              </ArrayInput>
-            </FormGroup>
-            
-            <ReviewsSection>
-              <h3>Reviews</h3>
-              {editedMattress.reviews && editedMattress.reviews.map((review, index) => (
-                <ReviewItem key={index}>
-                  <RemoveButton 
-                    onClick={() => handleRemoveReview(index)}
-                    style={{ position: 'absolute', top: '10px', right: '10px' }}
-                  >
-                    Remove
-                  </RemoveButton>
-                  
-                  <ReviewHeader>
-                    <FormGroup>
-                      <Label>Title</Label>
-                      <Input 
-                        type="text" 
-                        value={review.title} 
-                        onChange={(e) => handleReviewChange(index, 'title', e.target.value)} 
-                      />
-                    </FormGroup>
-                    <FormGroup>
-                      <Label>Stars (1-5)</Label>
-                      <Input 
-                        type="number" 
-                        min="1" 
-                        max="5" 
-                        value={review.stars} 
-                        onChange={(e) => handleReviewChange(index, 'stars', e.target.value)} 
-                        style={{ width: '80px' }}
-                      />
-                    </FormGroup>
-                  </ReviewHeader>
-                  
-                  <FormGroup>
-                    <Label>Author</Label>
-                    <Input 
-                      type="text" 
-                      value={review.author} 
-                      onChange={(e) => handleReviewChange(index, 'author', e.target.value)} 
-                    />
-                  </FormGroup>
-                  
-                  <FormGroup>
-                    <Label>Date</Label>
-                    <Input 
-                      type="date" 
-                      value={review.date} 
-                      onChange={(e) => handleReviewChange(index, 'date', e.target.value)} 
-                    />
-                  </FormGroup>
-                  
-                  <FormGroup>
-                    <Label>Review Text</Label>
-                    <TextArea 
-                      value={review.text} 
-                      onChange={(e) => handleReviewChange(index, 'text', e.target.value)} 
-                    />
-                  </FormGroup>
-                </ReviewItem>
-              ))}
-              <AddItemButton onClick={handleAddReview}>
-                Add Review
-              </AddItemButton>
-            </ReviewsSection>
-            
-            <ButtonGroup>
-              <SaveButton onClick={handleSave}>
-                {isCreating ? 'Create Mattress' : 'Save Changes'}
-              </SaveButton>
-              
-              {!isCreating && (
-                <DeleteButton onClick={() => {
-                  setMattressToDelete(editedMattress)
-                  setShowConfirmDialog(true)
-                }}>
-                  Delete Mattress
-                </DeleteButton>
-              )}
-            </ButtonGroup>
-          </ModalContent>
-        </Modal>
-      )}
-      
-      {showConfirmDialog && (
-        <ConfirmDialog>
-          <ConfirmContent>
-            <ConfirmTitle>Confirm Deletion</ConfirmTitle>
-            <ConfirmText>
-              Are you sure you want to delete the mattress "{mattressToDelete?.name}"? 
-              This action cannot be undone.
-            </ConfirmText>
-            <ConfirmButtons>
-              <ConfirmButton onClick={handleCancelDelete}>Cancel</ConfirmButton>
-              <ConfirmButton primary onClick={handleConfirmDelete}>Delete</ConfirmButton>
-            </ConfirmButtons>
-          </ConfirmContent>
-        </ConfirmDialog>
-      )}
-      
-      {showSuccess && (
-        <SuccessMessage>
-          Operation completed successfully!
-        </SuccessMessage>
-      )}
-      
-      {showError && (
-        <ErrorMessage>
-          {errorMessage}
-        </ErrorMessage>
-      )}
-      
-      {isLoading && (
-        <LoadingOverlay>
-          <Spinner />
-        </LoadingOverlay>
-      )}
-    </Container>
-  )
-}
-
-export default MattressManager
+                  type
