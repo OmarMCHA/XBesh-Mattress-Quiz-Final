@@ -5,7 +5,8 @@ import {
   getMattresses, 
   updateMattress, 
   createMattress, 
-  deleteMattress 
+  deleteMattress,
+  initializeMattressData
 } from '../../services/mattressService'
 
 const Container = styled.div`
@@ -446,14 +447,36 @@ function MattressManager() {
   const [isCreating, setIsCreating] = useState(false)
   
   useEffect(() => {
-    loadMattresses()
+    const init = async () => {
+      setIsLoading(true);
+      try {
+        // First, ensure the database is initialized
+        await initializeMattressData();
+        
+        // Then load the mattresses
+        await loadMattresses();
+      } catch (error) {
+        console.error('Failed to initialize or load mattresses:', error);
+        setErrorMessage('Failed to initialize or load mattresses. Using local data as fallback.');
+        setShowError(true);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    init();
   }, [])
   
   const loadMattresses = async () => {
     setIsLoading(true)
     try {
       const data = await getMattresses()
-      setMattresses(data || [])
+      if (data && data.length > 0) {
+        console.log(`Loaded ${data.length} mattresses successfully`);
+        setMattresses(data)
+      } else {
+        throw new Error('No mattresses returned from database');
+      }
     } catch (error) {
       console.error('Failed to load mattresses:', error)
       setErrorMessage('Failed to load mattresses. Using local data as fallback.')
@@ -633,6 +656,9 @@ function MattressManager() {
         
         // Close the modal
         handleCloseModal()
+        
+        // Reload mattresses to ensure we have the latest data
+        await loadMattresses()
       } else {
         throw new Error('Failed to save mattress')
       }
@@ -670,6 +696,9 @@ function MattressManager() {
         setTimeout(() => {
           setShowSuccess(false)
         }, 5000)
+        
+        // Reload mattresses to ensure we have the latest data
+        await loadMattresses()
       } else {
         throw new Error('Failed to delete mattress')
       }
