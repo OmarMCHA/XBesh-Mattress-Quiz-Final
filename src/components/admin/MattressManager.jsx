@@ -1,15 +1,42 @@
 import React, { useState, useEffect } from 'react'
 import styled from 'styled-components'
-import { mattressData } from '../../data/mattressData'
+import { v4 as uuidv4 } from 'uuid'
+import { 
+  getMattresses, 
+  updateMattress, 
+  createMattress, 
+  deleteMattress 
+} from '../../services/mattressService'
 
 const Container = styled.div`
   padding: 1rem;
 `
 
-const Header = styled.h1`
+const Header = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 2rem;
+`
+
+const Title = styled.h1`
   font-size: 1.8rem;
   color: var(--text-dark);
+  margin: 0;
+`
+
+const AddButton = styled.button`
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.75rem 1.5rem;
+  cursor: pointer;
+  font-size: 1rem;
+  
+  &:hover {
+    background-color: var(--primary-dark);
+  }
 `
 
 const MattressGrid = styled.div`
@@ -26,6 +53,7 @@ const MattressCard = styled.div`
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
+  position: relative;
   
   &:hover {
     transform: translateY(-5px);
@@ -35,9 +63,10 @@ const MattressCard = styled.div`
 
 const MattressImage = styled.div`
   height: 180px;
-  background-image: url(${props => props.src});
+  background-image: url(${props => props.src || '/images/placeholder.svg'});
   background-size: cover;
   background-position: center;
+  position: relative;
 `
 
 const MattressInfo = styled.div`
@@ -76,6 +105,32 @@ const Stars = styled.div`
 const ReviewCount = styled.span`
   color: var(--text-light);
   font-size: 0.9rem;
+`
+
+const CardActions = styled.div`
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  gap: 5px;
+  z-index: 10;
+`
+
+const ActionButton = styled.button`
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  background-color: rgba(255, 255, 255, 0.9);
+  color: ${props => props.color || 'var(--text-dark)'};
+  
+  &:hover {
+    background-color: white;
+  }
 `
 
 const Modal = styled.div`
@@ -187,7 +242,7 @@ const RemoveButton = styled.button`
   }
 `
 
-const AddButton = styled.button`
+const AddItemButton = styled.button`
   background-color: var(--primary);
   color: white;
   border: none;
@@ -216,6 +271,29 @@ const SaveButton = styled.button`
   }
 `
 
+const DeleteButton = styled.button`
+  background-color: #f44336;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.75rem 1.5rem;
+  cursor: pointer;
+  font-size: 1rem;
+  margin-top: 1rem;
+  margin-left: 1rem;
+  
+  &:hover {
+    background-color: #d32f2f;
+  }
+`
+
+const ButtonGroup = styled.div`
+  display: flex;
+  justify-content: flex-start;
+  gap: 1rem;
+  margin-top: 1.5rem;
+`
+
 const ReviewsSection = styled.div`
   margin-top: 2rem;
   border-top: 1px solid #ddd;
@@ -227,30 +305,13 @@ const ReviewItem = styled.div`
   border-radius: 8px;
   padding: 1rem;
   margin-bottom: 1rem;
+  position: relative;
 `
 
 const ReviewHeader = styled.div`
   display: flex;
   justify-content: space-between;
   margin-bottom: 0.5rem;
-`
-
-const ReviewTitle = styled.h4`
-  margin: 0;
-  font-size: 1.1rem;
-`
-
-const ReviewAuthor = styled.div`
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 0.5rem;
-  font-size: 0.9rem;
-  color: var(--text-light);
-`
-
-const ReviewText = styled.p`
-  margin: 0.5rem 0 0;
-  font-size: 0.95rem;
 `
 
 const SuccessMessage = styled.div`
@@ -272,36 +333,187 @@ const SuccessMessage = styled.div`
   }
 `
 
+const ErrorMessage = styled.div`
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background-color: #f44336;
+  color: white;
+  padding: 1rem;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  z-index: 1100;
+  animation: fadeOut 3s forwards;
+  animation-delay: 2s;
+  
+  @keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; visibility: hidden; }
+  }
+`
+
+const ConfirmDialog = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+`
+
+const ConfirmContent = styled.div`
+  background-color: white;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 400px;
+  padding: 2rem;
+  text-align: center;
+`
+
+const ConfirmTitle = styled.h3`
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: var(--text-dark);
+`
+
+const ConfirmText = styled.p`
+  margin-bottom: 2rem;
+  color: var(--text-light);
+`
+
+const ConfirmButtons = styled.div`
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+`
+
+const ConfirmButton = styled.button`
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+  background-color: ${props => props.primary ? '#f44336' : '#f5f5f5'};
+  color: ${props => props.primary ? 'white' : 'var(--text-dark)'};
+  
+  &:hover {
+    background-color: ${props => props.primary ? '#d32f2f' : '#e0e0e0'};
+  }
+`
+
+const LoadingOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1300;
+`
+
+const Spinner = styled.div`
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  border-top: 4px solid var(--primary);
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+`
+
 function MattressManager() {
   const [mattresses, setMattresses] = useState([])
   const [selectedMattress, setSelectedMattress] = useState(null)
   const [editedMattress, setEditedMattress] = useState(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
+  const [showError, setShowError] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
+  const [isLoading, setIsLoading] = useState(true)
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false)
+  const [mattressToDelete, setMattressToDelete] = useState(null)
+  const [isCreating, setIsCreating] = useState(false)
   
   useEffect(() => {
-    // Try to load mattresses from localStorage first
-    const savedMattresses = localStorage.getItem('mattressData')
-    if (savedMattresses) {
-      setMattresses(JSON.parse(savedMattresses))
-    } else {
-      // Fall back to the imported data if nothing in localStorage
-      setMattresses(mattressData)
-      // Initialize localStorage with the imported data
-      localStorage.setItem('mattressData', JSON.stringify(mattressData))
-    }
+    loadMattresses()
   }, [])
+  
+  const loadMattresses = async () => {
+    setIsLoading(true)
+    try {
+      const data = await getMattresses()
+      setMattresses(data || [])
+    } catch (error) {
+      console.error('Failed to load mattresses:', error)
+      setErrorMessage('Failed to load mattresses. Using local data as fallback.')
+      setShowError(true)
+    } finally {
+      setIsLoading(false)
+    }
+  }
   
   const handleMattressClick = (mattress) => {
     setSelectedMattress(mattress)
     setEditedMattress({...mattress})
     setIsModalOpen(true)
+    setIsCreating(false)
+  }
+  
+  const handleAddNewMattress = () => {
+    const newMattress = {
+      id: uuidv4(),
+      name: "New Mattress",
+      brand: "Brand Name",
+      type: "Memory Foam",
+      firmness: 5,
+      price: 999,
+      url: "",
+      features: ["Feature 1", "Feature 2"],
+      pros: ["Pro 1", "Pro 2"],
+      cons: ["Con 1", "Con 2"],
+      warranty: "10-year warranty",
+      trialPeriod: "100-night trial",
+      shipping: "Free shipping",
+      returns: "Free returns",
+      idealFor: ["Side sleepers", "Back sleepers"],
+      description: "Description of the new mattress.",
+      expertOpinion: "Expert opinion about the new mattress.",
+      image: "/images/placeholder.svg",
+      reviewCount: 0,
+      rating: 5.0,
+      reviews: [
+        {
+          stars: 5,
+          title: "Sample Review",
+          text: "This is a sample review for the new mattress.",
+          author: "Sample User",
+          date: new Date().toISOString().split('T')[0]
+        }
+      ]
+    }
+    
+    setSelectedMattress(null)
+    setEditedMattress(newMattress)
+    setIsModalOpen(true)
+    setIsCreating(true)
   }
   
   const handleCloseModal = () => {
     setIsModalOpen(false)
     setSelectedMattress(null)
     setEditedMattress(null)
+    setIsCreating(false)
   }
   
   const handleInputChange = (e) => {
@@ -390,28 +602,94 @@ function MattressManager() {
     })
   }
   
-  const handleSave = () => {
-    // Update the mattresses state with the edited mattress
-    const updatedMattresses = mattresses.map(mattress => 
-      mattress.id === editedMattress.id ? editedMattress : mattress
-    )
+  const handleSave = async () => {
+    setIsLoading(true)
+    try {
+      let savedMattress
+      
+      if (isCreating) {
+        savedMattress = await createMattress(editedMattress)
+      } else {
+        savedMattress = await updateMattress(editedMattress)
+      }
+      
+      if (savedMattress) {
+        // Update the local state
+        setMattresses(prev => {
+          if (isCreating) {
+            return [...prev, savedMattress]
+          } else {
+            return prev.map(mattress => 
+              mattress.id === savedMattress.id ? savedMattress : mattress
+            )
+          }
+        })
+        
+        // Show success message
+        setShowSuccess(true)
+        setTimeout(() => {
+          setShowSuccess(false)
+        }, 5000)
+        
+        // Close the modal
+        handleCloseModal()
+      } else {
+        throw new Error('Failed to save mattress')
+      }
+    } catch (error) {
+      console.error('Error saving mattress:', error)
+      setErrorMessage('Failed to save mattress. Changes may not persist across sessions.')
+      setShowError(true)
+      setTimeout(() => {
+        setShowError(false)
+      }, 5000)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+  
+  const handleDeleteClick = (mattress, e) => {
+    e.stopPropagation()
+    setMattressToDelete(mattress)
+    setShowConfirmDialog(true)
+  }
+  
+  const handleConfirmDelete = async () => {
+    if (!mattressToDelete) return
     
-    // Update state
-    setMattresses(updatedMattresses)
-    
-    // Save to localStorage for persistence
-    localStorage.setItem('mattressData', JSON.stringify(updatedMattresses))
-    
-    // Close the modal
-    handleCloseModal()
-    
-    // Show success message
-    setShowSuccess(true)
-    
-    // Hide success message after 5 seconds
-    setTimeout(() => {
-      setShowSuccess(false)
-    }, 5000)
+    setIsLoading(true)
+    try {
+      const success = await deleteMattress(mattressToDelete.id)
+      
+      if (success) {
+        // Update the local state
+        setMattresses(prev => prev.filter(m => m.id !== mattressToDelete.id))
+        
+        // Show success message
+        setShowSuccess(true)
+        setTimeout(() => {
+          setShowSuccess(false)
+        }, 5000)
+      } else {
+        throw new Error('Failed to delete mattress')
+      }
+    } catch (error) {
+      console.error('Error deleting mattress:', error)
+      setErrorMessage('Failed to delete mattress. Changes may not persist across sessions.')
+      setShowError(true)
+      setTimeout(() => {
+        setShowError(false)
+      }, 5000)
+    } finally {
+      setIsLoading(false)
+      setShowConfirmDialog(false)
+      setMattressToDelete(null)
+    }
+  }
+  
+  const handleCancelDelete = () => {
+    setShowConfirmDialog(false)
+    setMattressToDelete(null)
   }
   
   // Generate star rating
@@ -446,12 +724,25 @@ function MattressManager() {
   
   return (
     <Container>
-      <Header>Mattress Manager</Header>
+      <Header>
+        <Title>Mattress Manager</Title>
+        <AddButton onClick={handleAddNewMattress}>Add New Mattress</AddButton>
+      </Header>
       
       <MattressGrid>
         {mattresses.map(mattress => (
           <MattressCard key={mattress.id} onClick={() => handleMattressClick(mattress)}>
-            <MattressImage src={mattress.image} />
+            <MattressImage src={mattress.image}>
+              <CardActions>
+                <ActionButton 
+                  color="#f44336" 
+                  onClick={(e) => handleDeleteClick(mattress, e)}
+                  title="Delete mattress"
+                >
+                  ×
+                </ActionButton>
+              </CardActions>
+            </MattressImage>
             <MattressInfo>
               <MattressName>{mattress.name}</MattressName>
               <MattressBrand>{mattress.brand}</MattressBrand>
@@ -471,7 +762,7 @@ function MattressManager() {
         <Modal>
           <ModalContent>
             <CloseButton onClick={handleCloseModal}>×</CloseButton>
-            <h2>Edit Mattress</h2>
+            <h2>{isCreating ? 'Add New Mattress' : 'Edit Mattress'}</h2>
             
             <FormGrid>
               <FormGroup>
@@ -644,9 +935,9 @@ function MattressManager() {
                     </RemoveButton>
                   </ArrayItem>
                 ))}
-                <AddButton onClick={() => handleAddArrayItem('features')}>
+                <AddItemButton onClick={() => handleAddArrayItem('features')}>
                   Add Feature
-                </AddButton>
+                </AddItemButton>
               </ArrayInput>
             </FormGroup>
             
@@ -665,9 +956,9 @@ function MattressManager() {
                     </RemoveButton>
                   </ArrayItem>
                 ))}
-                <AddButton onClick={() => handleAddArrayItem('pros')}>
+                <AddItemButton onClick={() => handleAddArrayItem('pros')}>
                   Add Pro
-                </AddButton>
+                </AddItemButton>
               </ArrayInput>
             </FormGroup>
             
@@ -686,9 +977,9 @@ function MattressManager() {
                     </RemoveButton>
                   </ArrayItem>
                 ))}
-                <AddButton onClick={() => handleAddArrayItem('cons')}>
+                <AddItemButton onClick={() => handleAddArrayItem('cons')}>
                   Add Con
-                </AddButton>
+                </AddItemButton>
               </ArrayInput>
             </FormGroup>
             
@@ -707,9 +998,9 @@ function MattressManager() {
                     </RemoveButton>
                   </ArrayItem>
                 ))}
-                <AddButton onClick={() => handleAddArrayItem('idealFor')}>
+                <AddItemButton onClick={() => handleAddArrayItem('idealFor')}>
                   Add Ideal For
-                </AddButton>
+                </AddItemButton>
               </ArrayInput>
             </FormGroup>
             
@@ -717,6 +1008,13 @@ function MattressManager() {
               <h3>Reviews</h3>
               {editedMattress.reviews && editedMattress.reviews.map((review, index) => (
                 <ReviewItem key={index}>
+                  <RemoveButton 
+                    onClick={() => handleRemoveReview(index)}
+                    style={{ position: 'absolute', top: '10px', right: '10px' }}
+                  >
+                    Remove
+                  </RemoveButton>
+                  
                   <ReviewHeader>
                     <FormGroup>
                       <Label>Title</Label>
@@ -739,24 +1037,23 @@ function MattressManager() {
                     </FormGroup>
                   </ReviewHeader>
                   
-                  <ReviewAuthor>
-                    <FormGroup>
-                      <Label>Author</Label>
-                      <Input 
-                        type="text" 
-                        value={review.author} 
-                        onChange={(e) => handleReviewChange(index, 'author', e.target.value)} 
-                      />
-                    </FormGroup>
-                    <FormGroup>
-                      <Label>Date</Label>
-                      <Input 
-                        type="date" 
-                        value={review.date} 
-                        onChange={(e) => handleReviewChange(index, 'date', e.target.value)} 
-                      />
-                    </FormGroup>
-                  </ReviewAuthor>
+                  <FormGroup>
+                    <Label>Author</Label>
+                    <Input 
+                      type="text" 
+                      value={review.author} 
+                      onChange={(e) => handleReviewChange(index, 'author', e.target.value)} 
+                    />
+                  </FormGroup>
+                  
+                  <FormGroup>
+                    <Label>Date</Label>
+                    <Input 
+                      type="date" 
+                      value={review.date} 
+                      onChange={(e) => handleReviewChange(index, 'date', e.target.value)} 
+                    />
+                  </FormGroup>
                   
                   <FormGroup>
                     <Label>Review Text</Label>
@@ -765,26 +1062,63 @@ function MattressManager() {
                       onChange={(e) => handleReviewChange(index, 'text', e.target.value)} 
                     />
                   </FormGroup>
-                  
-                  <RemoveButton onClick={() => handleRemoveReview(index)}>
-                    Remove Review
-                  </RemoveButton>
                 </ReviewItem>
               ))}
-              <AddButton onClick={handleAddReview}>
+              <AddItemButton onClick={handleAddReview}>
                 Add Review
-              </AddButton>
+              </AddItemButton>
             </ReviewsSection>
             
-            <SaveButton onClick={handleSave}>Save Changes</SaveButton>
+            <ButtonGroup>
+              <SaveButton onClick={handleSave}>
+                {isCreating ? 'Create Mattress' : 'Save Changes'}
+              </SaveButton>
+              
+              {!isCreating && (
+                <DeleteButton onClick={() => {
+                  setMattressToDelete(editedMattress)
+                  setShowConfirmDialog(true)
+                }}>
+                  Delete Mattress
+                </DeleteButton>
+              )}
+            </ButtonGroup>
           </ModalContent>
         </Modal>
       )}
       
+      {showConfirmDialog && (
+        <ConfirmDialog>
+          <ConfirmContent>
+            <ConfirmTitle>Confirm Deletion</ConfirmTitle>
+            <ConfirmText>
+              Are you sure you want to delete the mattress "{mattressToDelete?.name}"? 
+              This action cannot be undone.
+            </ConfirmText>
+            <ConfirmButtons>
+              <ConfirmButton onClick={handleCancelDelete}>Cancel</ConfirmButton>
+              <ConfirmButton primary onClick={handleConfirmDelete}>Delete</ConfirmButton>
+            </ConfirmButtons>
+          </ConfirmContent>
+        </ConfirmDialog>
+      )}
+      
       {showSuccess && (
         <SuccessMessage>
-          Mattress updated successfully!
+          Operation completed successfully!
         </SuccessMessage>
+      )}
+      
+      {showError && (
+        <ErrorMessage>
+          {errorMessage}
+        </ErrorMessage>
+      )}
+      
+      {isLoading && (
+        <LoadingOverlay>
+          <Spinner />
+        </LoadingOverlay>
       )}
     </Container>
   )

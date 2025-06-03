@@ -34,6 +34,13 @@ const QuizDescription = styled.p`
   line-height: 1.6;
 `
 
+const LoadingMessage = styled.div`
+  text-align: center;
+  padding: 3rem;
+  font-size: 1.5rem;
+  color: var(--text-light);
+`
+
 function Quiz() {
   const navigate = useNavigate()
   const { 
@@ -43,6 +50,7 @@ function Quiz() {
     progress,
     answers,
     quizCompleted,
+    isLoading,
     handleAnswer,
     nextQuestion,
     prevQuestion
@@ -53,6 +61,21 @@ function Quiz() {
       navigate('/results')
     }
   }, [quizCompleted, navigate])
+  
+  // Show loading state while questions are being fetched
+  if (isLoading || !currentQuestion) {
+    return (
+      <QuizContainer>
+        <QuizHeader>
+          <QuizTitle>Mattress Firmness Quiz</QuizTitle>
+          <QuizDescription>
+            Answer the following questions to find your ideal mattress firmness and type.
+          </QuizDescription>
+        </QuizHeader>
+        <LoadingMessage>Loading quiz questions...</LoadingMessage>
+      </QuizContainer>
+    )
+  }
   
   return (
     <QuizContainer>
