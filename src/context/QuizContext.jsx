@@ -1,8 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
-import { getQuizQuestions } from '../services/quizService'
-import { getMattresses } from '../services/mattressService'
-import { saveQuizStats, getQuizStats } from '../services/quizService'
-import { quizQuestions } from '../data/quizQuestions' // Import local data as fallback
+import { quizQuestions } from '../data/quizQuestions'
+import { mattressData } from '../data/mattressData'
 
 const QuizContext = createContext()
 
@@ -11,8 +9,6 @@ export function useQuiz() {
 }
 
 export function QuizProvider({ children }) {
-  const [quizQuestions, setQuizQuestions] = useState([])
-  const [mattressData, setMattressData] = useState([])
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   const [answers, setAnswers] = useState({})
   const [results, setResults] = useState(null)
@@ -28,76 +24,21 @@ export function QuizProvider({ children }) {
     answerStats: {}
   })
   const [isAdmin, setIsAdmin] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
 
-  // Load data and stats on initial render
+  // Load stats from localStorage on initial render
   useEffect(() => {
-    const loadData = async () => {
-      setIsLoading(true)
-      try {
-        // Load quiz questions
-        const questions = await getQuizQuestions()
-        
-        if (questions && questions.length > 0) {
-          setQuizQuestions(questions)
-        } else {
-          // If no questions from API, use local fallback data
-          console.log('Using local quiz data as fallback')
-          setQuizQuestions(quizQuestions)
-        }
-        
-        // Load mattress data
-        const mattresses = await getMattresses()
-        if (mattresses) {
-          setMattressData(mattresses)
-        }
-        
-        // Load quiz stats
-        const stats = await getQuizStats()
-        if (stats) {
-          setQuizStats(stats)
-        } else {
-          // If no stats in database, try localStorage
-          const savedStats = localStorage.getItem('quizStats')
-          if (savedStats) {
-            const parsedStats = JSON.parse(savedStats)
-            setQuizStats(parsedStats)
-            // Save to database for future use
-            await saveQuizStats(parsedStats)
-          }
-        }
-      } catch (error) {
-        console.error('Error loading quiz data:', error)
-        // Use local fallback data if API fails
-        console.log('Using local quiz data as fallback due to error')
-        setQuizQuestions(quizQuestions)
-      } finally {
-        setIsLoading(false)
-      }
-      
-      // Check admin status
-      checkAdminStatus()
+    const savedStats = localStorage.getItem('quizStats')
+    if (savedStats) {
+      setQuizStats(JSON.parse(savedStats))
     }
     
-    loadData()
+    // Check admin status
+    checkAdminStatus()
   }, [])
 
-  // Save stats to database and localStorage whenever they change
+  // Save stats to localStorage whenever they change
   useEffect(() => {
-    const saveStats = async () => {
-      try {
-        await saveQuizStats(quizStats)
-      } catch (error) {
-        console.error('Error saving quiz stats to database:', error)
-      }
-      // Always save to localStorage as backup
-      localStorage.setItem('quizStats', JSON.stringify(quizStats))
-    }
-    
-    // Only save if stats have been initialized (not on first render)
-    if (quizStats.totalQuizzes > 0) {
-      saveStats()
-    }
+    localStorage.setItem('quizStats', JSON.stringify(quizStats))
   }, [quizStats])
 
   // Set quiz start time when component mounts
@@ -111,9 +52,9 @@ export function QuizProvider({ children }) {
     }))
   }, [])
 
-  const currentQuestion = quizQuestions.length > 0 ? quizQuestions[currentQuestionIndex] : null
+  const currentQuestion = quizQuestions[currentQuestionIndex]
   const totalQuestions = quizQuestions.length
-  const progress = totalQuestions > 0 ? (currentQuestionIndex / totalQuestions) * 100 : 0
+  const progress = (currentQuestionIndex / totalQuestions) * 100
 
   function handleAnswer(questionId, answer) {
     setAnswers(prev => ({
@@ -185,18 +126,16 @@ export function QuizProvider({ children }) {
     
     setQuizStats(resetStats)
     
-    // Save to database and localStorage
-    saveQuizStats(resetStats)
+    // Save to localStorage
+    localStorage.setItem('quizStats', JSON.stringify(resetStats))
   }
 
   function trackDropOff() {
     // Track which question users drop off at
     setQuizStats(prev => {
       const dropOffs = {...prev.dropOffs}
-      const questionId = currentQuestion?.id
-      if (questionId) {
-        dropOffs[questionId] = (dropOffs[questionId] || 0) + 1
-      }
+      const questionId = currentQuestion.id
+      dropOffs[questionId] = (dropOffs[questionId] || 0) + 1
       return {
         ...prev,
         dropOffs
@@ -708,7 +647,6 @@ export function QuizProvider({ children }) {
     results,
     quizCompleted,
     isAdmin,
-    isLoading,
     handleAnswer,
     nextQuestion,
     prevQuestion,
