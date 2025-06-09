@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="80" height="80" rx="40" fill="#F5F7FA"/>
+  <path d="M56 52H24C22.8954 52 22 51.1046 22 50V30C22 28.8954 22.8954 28 24 28H56C57.1046 28 58 28.8954 58 30V50C58 51.1046 57.1046 52 56 52Z" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M40 28V52" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M31 36C33.2091 36 35 34.2091 35 32C35 29.7909 33.2091 28 31 28C28.7909 28 27 29.7909 27 32C27 34.2091 28.7909 36 31 36Z" fill="#3B82F6"/>
+  <path d="M49 36C51.2091 36 53 34.2091 53 32C53 29.7909 51.2091 28 49 28C46.7909 28 45 29.7909 45 32C45 34.2091 46.7909 36 49 36Z" fill="#3B82F6"/>
+  <path d="M31 44C33.7614 44 36 41.7614 36 39C36 36.2386 33.7614 34 31 34C28.2386 34 26 36.2386 26 39C26 41.7614 28.2386 44 31 44Z" fill="#3B82F6" fill-opacity="0.6"/>
+  <path d="M49 44C51.7614 44 54 41.7614 54 39C54 36.2386 51.7614 34 49 34C46.2386 34 44 36.2386 44 39C44 41.7614 46.2386 44 49 44Z" fill="#3B82F6" fill-opacity="0.6"/>
+  <path d="M25 40L35 40" stroke="#FF4A4A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M45 40L55 40" stroke="#FF4A4A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
