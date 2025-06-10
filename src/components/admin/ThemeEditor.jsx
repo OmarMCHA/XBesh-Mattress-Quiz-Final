@@ -247,7 +247,7 @@ const PopoverContainer = styled.div`
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
   background: white;
   padding: 1rem;
-  width: 240px;
+  width: 100%; /* Match the width of the parent container */
 `
 
 const SwatchesContainer = styled.div`
@@ -276,72 +276,6 @@ const Swatch = styled.button`
   }
 `
 
-// Custom Color Picker Components
-const CustomColorPicker = styled.div`
-  width: 100%;
-  margin-bottom: 1rem;
-`
-
-const SaturationArea = styled.div`
-  position: relative;
-  width: 100%;
-  height: 150px;
-  background-image: linear-gradient(to top, #000, transparent), 
-                    linear-gradient(to right, #fff, transparent);
-  background-color: ${props => props.hue || '#ff0000'};
-  border-radius: 4px 4px 0 0;
-  margin-bottom: 10px;
-  cursor: crosshair;
-`
-
-const SaturationPointer = styled.div`
-  position: absolute;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  border: 2px solid white;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-  left: ${props => props.x}%;
-  top: ${props => props.y}%;
-  background-color: ${props => props.color};
-`
-
-const HueSlider = styled.input.attrs({ type: 'range', min: 0, max: 360, step: 1 })`
-  -webkit-appearance: none;
-  width: 100%;
-  height: 20px;
-  border-radius: 0 0 4px 4px;
-  background: linear-gradient(
-    to right,
-    #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000
-  );
-  outline: none;
-  
-  &::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: white;
-    border: 2px solid white;
-    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
-    cursor: pointer;
-  }
-  
-  &::-moz-range-thumb {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: white;
-    border: 2px solid white;
-    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
-    cursor: pointer;
-  }
-`
-
 function ThemeEditor() {
   const defaultTheme = {
     colors: {
@@ -367,10 +301,7 @@ function ThemeEditor() {
   const [theme, setTheme] = useState(defaultTheme)
   const [successMessage, setSuccessMessage] = useState('')
   const [activeColorPicker, setActiveColorPicker] = useState(null)
-  const [hue, setHue] = useState(0)
-  const [saturation, setSaturation] = useState({ x: 100, y: 0 }) // x: saturation, y: value
   const popoverRef = useRef(null)
-  const saturationRef = useRef(null)
   
   // Predefined color palette
   const colorPalette = [
@@ -413,145 +344,6 @@ function ThemeEditor() {
       document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [])
-  
-  // Convert HSV to RGB
-  const hsvToRgb = (h, s, v) => {
-    h = h / 360
-    s = s / 100
-    v = v / 100
-    
-    let r, g, b;
-    const i = Math.floor(h * 6);
-    const f = h * 6 - i;
-    const p = v * (1 - s);
-    const q = v * (1 - f * s);
-    const t = v * (1 - (1 - f) * s);
-    
-    switch (i % 6) {
-      case 0: r = v; g = t; b = p; break;
-      case 1: r = q; g = v; b = p; break;
-      case 2: r = p; g = v; b = t; break;
-      case 3: r = p; g = q; b = v; break;
-      case 4: r = t; g = p; b = v; break;
-      case 5: r = v; g = p; b = q; break;
-    }
-    
-    return {
-      r: Math.round(r * 255),
-      g: Math.round(g * 255),
-      b: Math.round(b * 255)
-    };
-  }
-  
-  // Convert RGB to Hex
-  const rgbToHex = (r, g, b) => {
-    return '#' + [r, g, b].map(x => {
-      const hex = x.toString(16);
-      return hex.length === 1 ? '0' + hex : hex;
-    }).join('');
-  }
-  
-  // Convert Hex to HSV
-  const hexToHsv = (hex) => {
-    // Remove # if present
-    hex = hex.replace(/^#/, '');
-    
-    // Parse the hex values
-    let r, g, b;
-    if (hex.length === 3) {
-      r = parseInt(hex[0] + hex[0], 16);
-      g = parseInt(hex[1] + hex[1], 16);
-      b = parseInt(hex[2] + hex[2], 16);
-    } else {
-      r = parseInt(hex.substring(0, 2), 16);
-      g = parseInt(hex.substring(2, 4), 16);
-      b = parseInt(hex.substring(4, 6), 16);
-    }
-    
-    // Convert RGB to HSV
-    r /= 255;
-    g /= 255;
-    b /= 255;
-    
-    const max = Math.max(r, g, b);
-    const min = Math.min(r, g, b);
-    const delta = max - min;
-    
-    let h, s, v;
-    
-    // Calculate hue
-    if (delta === 0) {
-      h = 0;
-    } else if (max === r) {
-      h = ((g - b) / delta) % 6;
-    } else if (max === g) {
-      h = (b - r) / delta + 2;
-    } else {
-      h = (r - g) / delta + 4;
-    }
-    
-    h = Math.round(h * 60);
-    if (h < 0) h += 360;
-    
-    // Calculate saturation and value
-    s = max === 0 ? 0 : Math.round((delta / max) * 100);
-    v = Math.round(max * 100);
-    
-    return { h, s, v };
-  }
-  
-  // Update color when saturation area is clicked
-  const handleSaturationChange = (e) => {
-    if (!saturationRef.current) return;
-    
-    const rect = saturationRef.current.getBoundingClientRect();
-    const x = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
-    const y = Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100));
-    
-    setSaturation({ x, y });
-    
-    // Calculate color from HSV
-    const s = x;
-    const v = 100 - y;
-    const { r, g, b } = hsvToRgb(hue, s, v);
-    const hexColor = rgbToHex(r, g, b);
-    
-    if (activeColorPicker) {
-      handleColorChange(activeColorPicker, hexColor);
-    }
-  }
-  
-  // Handle mouse move on saturation area
-  const handleSaturationMouseMove = (e) => {
-    if (e.buttons !== 1) return; // Only respond to left mouse button
-    handleSaturationChange(e);
-  }
-  
-  // Handle hue change
-  const handleHueChange = (e) => {
-    const newHue = parseInt(e.target.value);
-    setHue(newHue);
-    
-    // Recalculate color with new hue
-    const s = saturation.x;
-    const v = 100 - saturation.y;
-    const { r, g, b } = hsvToRgb(newHue, s, v);
-    const hexColor = rgbToHex(r, g, b);
-    
-    if (activeColorPicker) {
-      handleColorChange(activeColorPicker, hexColor);
-    }
-  }
-  
-  // Initialize color picker with current color
-  const initializeColorPicker = (colorKey) => {
-    const currentColor = theme.colors[colorKey];
-    const { h, s, v } = hexToHsv(currentColor);
-    
-    setHue(h);
-    setSaturation({ x: s, y: 100 - v });
-    setActiveColorPicker(colorKey);
-  }
   
   const handleColorChange = (colorKey, value) => {
     setTheme(prev => ({
@@ -607,7 +399,7 @@ function ThemeEditor() {
     if (activeColorPicker === colorKey) {
       setActiveColorPicker(null)
     } else {
-      initializeColorPicker(colorKey)
+      setActiveColorPicker(colorKey)
     }
   }
   
@@ -624,19 +416,53 @@ function ThemeEditor() {
     { value: 'Georgia, serif', label: 'Georgia' }
   ]
   
-  // Calculate current color from HSV
-  const getCurrentColor = () => {
-    const s = saturation.x;
-    const v = 100 - saturation.y;
-    const { r, g, b } = hsvToRgb(hue, s, v);
-    return rgbToHex(r, g, b);
-  }
-  
-  // Get hue color for saturation background
-  const getHueColor = () => {
-    const { r, g, b } = hsvToRgb(hue, 100, 100);
-    return rgbToHex(r, g, b);
-  }
+  // Simple color picker component using HTML5 color input
+  const SimpleColorPicker = ({ color, onChange }) => {
+    return (
+      <div style={{ width: '100%' }}>
+        <div style={{ marginBottom: '15px' }}>
+          <input 
+            type="color" 
+            value={color} 
+            onChange={(e) => onChange(e.target.value)}
+            style={{ 
+              width: '100%', 
+              height: '40px',
+              padding: '0',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          />
+        </div>
+        <div>
+          <h4 style={{ marginBottom: '10px', fontSize: '14px' }}>Preset Colors</h4>
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(5, 1fr)', 
+            gap: '8px' 
+          }}>
+            {colorPalette.map((paletteColor, index) => (
+              <button
+                key={index}
+                onClick={() => onChange(paletteColor)}
+                style={{
+                  width: '24px',
+                  height: '24px',
+                  backgroundColor: paletteColor,
+                  border: '1px solid rgba(0,0,0,0.1)',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  padding: 0
+                }}
+                aria-label={`Select color ${paletteColor}`}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  };
   
   return (
     <Container>
@@ -660,55 +486,32 @@ function ThemeEditor() {
           {Object.entries(theme.colors).map(([key, value]) => (
             <ColorItem key={key}>
               <ColorLabel>{key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</ColorLabel>
-              <ColorPickerContainer>
-                <ColorPreview 
-                  color={value} 
-                  onClick={() => toggleColorPicker(key)}
-                  className="color-preview"
-                  aria-label={`Select color for ${key}`}
-                  type="button"
-                />
-                <ColorInput 
-                  type="text" 
-                  value={value} 
-                  onChange={(e) => handleColorChange(key, e.target.value)} 
-                  aria-label={`Color value for ${key}`}
-                />
+              <div style={{ position: 'relative', width: '100%' }}>
+                <ColorPickerContainer>
+                  <ColorPreview 
+                    color={value} 
+                    onClick={() => toggleColorPicker(key)}
+                    className="color-preview"
+                    aria-label={`Select color for ${key}`}
+                    type="button"
+                  />
+                  <ColorInput 
+                    type="text" 
+                    value={value} 
+                    onChange={(e) => handleColorChange(key, e.target.value)} 
+                    aria-label={`Color value for ${key}`}
+                  />
+                </ColorPickerContainer>
                 
                 {activeColorPicker === key && (
                   <PopoverContainer ref={popoverRef}>
-                    <CustomColorPicker>
-                      <SaturationArea 
-                        ref={saturationRef}
-                        hue={getHueColor()}
-                        onClick={handleSaturationChange}
-                        onMouseMove={handleSaturationMouseMove}
-                      >
-                        <SaturationPointer 
-                          x={saturation.x} 
-                          y={saturation.y} 
-                          color={getCurrentColor()}
-                        />
-                      </SaturationArea>
-                      <HueSlider 
-                        value={hue} 
-                        onChange={handleHueChange} 
-                      />
-                    </CustomColorPicker>
-                    <SwatchesContainer>
-                      {colorPalette.map((color, index) => (
-                        <Swatch 
-                          key={index} 
-                          color={color} 
-                          onClick={() => handleColorChange(key, color)}
-                          type="button"
-                          aria-label={`Select predefined color ${color}`}
-                        />
-                      ))}
-                    </SwatchesContainer>
+                    <SimpleColorPicker 
+                      color={value} 
+                      onChange={(newColor) => handleColorChange(key, newColor)} 
+                    />
                   </PopoverContainer>
                 )}
-              </ColorPickerContainer>
+              </div>
             </ColorItem>
           ))}
         </ColorGrid>
