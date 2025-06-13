@@ -43,6 +43,16 @@ const ColorPickerContainer = styled.div`
   display: flex;
   align-items: center;
   position: relative;
+  cursor: pointer; /* Add cursor pointer to entire container */
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 5px;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.15);
+  }
 `
 
 const ColorPreview = styled.button`
@@ -71,12 +81,13 @@ const ColorPreview = styled.button`
 const ColorInput = styled.input`
   flex: 1;
   padding: 0.75rem;
-  border: 1px solid #ddd;
+  border: none; /* Remove border since container now has border */
   border-radius: 8px;
   font-size: 1rem;
+  cursor: pointer;
+  background: transparent;
   
   &:focus {
-    border-color: var(--primary);
     outline: none;
   }
 `
@@ -276,6 +287,13 @@ const Swatch = styled.button`
   }
 `
 
+// New styled component for the enhanced clickable area
+const ColorInputWrapper = styled.div`
+  flex: 1;
+  position: relative;
+  cursor: pointer;
+`
+
 function ThemeEditor() {
   const defaultTheme = {
     colors: {
@@ -334,7 +352,7 @@ function ThemeEditor() {
     // Close color picker when clicking outside
     const handleClickOutside = (event) => {
       if (popoverRef.current && !popoverRef.current.contains(event.target) && 
-          !event.target.closest('.color-preview')) {
+          !event.target.closest('.color-picker-container')) {
         setActiveColorPicker(null)
       }
     }
@@ -480,18 +498,20 @@ function ThemeEditor() {
       
       <ThemeCard>
         <h2>Colors</h2>
-        <p>Customize the color scheme of your quiz application. Click on a color preview to open the color picker.</p>
+        <p>Customize the color scheme of your quiz application. Click on a color preview or text field to open the color picker.</p>
         
         <ColorGrid>
           {Object.entries(theme.colors).map(([key, value]) => (
             <ColorItem key={key}>
               <ColorLabel>{key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</ColorLabel>
               <div style={{ position: 'relative', width: '100%' }}>
-                <ColorPickerContainer>
+                {/* Make the entire container clickable */}
+                <ColorPickerContainer 
+                  onClick={() => toggleColorPicker(key)}
+                  className="color-picker-container"
+                >
                   <ColorPreview 
                     color={value} 
-                    onClick={() => toggleColorPicker(key)}
-                    className="color-preview"
                     aria-label={`Select color for ${key}`}
                     type="button"
                   />
@@ -500,6 +520,7 @@ function ThemeEditor() {
                     value={value} 
                     onChange={(e) => handleColorChange(key, e.target.value)} 
                     aria-label={`Color value for ${key}`}
+                    readOnly
                   />
                 </ColorPickerContainer>
                 
